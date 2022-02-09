@@ -8,8 +8,7 @@ import "./lib/ECDSA.sol";
 contract Subscription {
     uint256 MAX_INT = type(uint256).max;
     ISubscriptionConfig private configContract;
-    address private creatorAddress;
-    address private subscriptionOwner;
+    address private ownerAddress;
     uint256 public subscriptionCost;
     uint256 public billingFrequency;
 
@@ -21,29 +20,27 @@ contract Subscription {
 
     constructor(
         address _configContract,
-        address _creatorAddress,
-        address _subscriptionOwner,
+        address _ownerAddress,
         uint256 _subscriptionCost,
         uint256 _billingFrequency,
         bytes memory _signedMessage
     ) {
         address _signer = ECDSA.recover(
-            ECDSA.toEthSignedMessageHash(abi.encodePacked(_creatorAddress)),
+            ECDSA.toEthSignedMessageHash(abi.encodePacked(_ownerAddress)),
             _signedMessage
         );
         configContract = ISubscriptionConfig(_configContract);
         require(configContract.signer() == _signer, "Signer");
 
-        creatorAddress = _creatorAddress;
+        ownerAddress = _ownerAddress;
         subscriptionCost = _subscriptionCost;
         billingFrequency = _billingFrequency;
-        subscriptionOwner = _subscriptionOwner;
 
-        configContract.createSubscription(creatorAddress, _signedMessage);
+        configContract.createSubscription(ownerAddress, _signedMessage);
     }
 
     modifier onlySubscriptionOwner() {
-        require(msg.sender == subscriptionOwner, "Ownership");
+        require(msg.sender == ownerAddress, "Ownership");
         _;
     }
 
@@ -57,7 +54,7 @@ contract Subscription {
 
     function deleteSubscriptionContract() external onlySubscriptionOwner {
         configContract.deleteSubscription();
-        selfdestruct(payable(subscriptionOwner));
+        selfdestruct(payable(ownerAddress));
     }
 
     function subscribe() external {
@@ -104,6 +101,6 @@ contract Subscription {
 
         uint256 fee = (subscriptionCost / 100) * configContract.fee(); // do a max calculation here
         usdc.transferFrom(_subscriber, configContract.owner(), fee);
-        usdc.transferFrom(_subscriber, creatorAddress, subscriptionCost - fee);
+        usdc.transferFrom(_subscriber, ownerAddress, subscriptionCost - fee);
     }
 }
