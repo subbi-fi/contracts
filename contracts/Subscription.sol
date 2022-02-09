@@ -50,7 +50,7 @@ contract Subscription {
     function subscribe() external {
         require(!subscriberMap[msg.sender].isSubscribed, "Subscribed");
 
-        takePayment();
+        takePayment(msg.sender);
         subscriberMap[msg.sender] = Subscriber(true, block.timestamp);
         configContract.emitSubscription(msg.sender);
     }
@@ -69,8 +69,8 @@ contract Subscription {
             "No Payment Due"
         );
 
-        if (canTakePayment()) {
-            takePayment();
+        if (canTakePayment(_subscriber)) {
+            takePayment(_subscriber);
             subscriberMap[_subscriber].lastPaymentDate = block.timestamp;
         } else {
             subscriberMap[_subscriber].isSubscribed = false;
@@ -78,19 +78,19 @@ contract Subscription {
         }
     }
 
-    function canTakePayment() private view returns (bool) {
+    function canTakePayment(address _subscriber) private view returns (bool) {
         IERC20 usdc = IERC20(configContract.USDCAddress());
         return
-            usdc.allowance(msg.sender, address(this)) == MAX_INT &&
-            usdc.balanceOf(msg.sender) >= subscriptionCost;
+            usdc.allowance(_subscriber, address(this)) == MAX_INT &&
+            usdc.balanceOf(_subscriber) >= subscriptionCost;
     }
 
-    function takePayment() private {
-        require(canTakePayment(), "Payment Impossible");
+    function takePayment(address _subscriber) private {
+        require(canTakePayment(_subscriber), "Payment Impossible");
         IERC20 usdc = IERC20(configContract.USDCAddress());
 
         uint256 fee = (subscriptionCost / 100) * configContract.fee();
-        usdc.transferFrom(msg.sender, configContract.owner(), fee);
-        usdc.transferFrom(msg.sender, creatorAddress, subscriptionCost - fee);
+        usdc.transferFrom(_subscriber, configContract.owner(), fee);
+        usdc.transferFrom(_subscriber, creatorAddress, subscriptionCost - fee);
     }
 }
