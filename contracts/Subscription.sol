@@ -9,6 +9,7 @@ contract Subscription {
     uint256 MAX_INT = type(uint256).max;
     ISubscriptionConfig private configContract;
     address private creatorAddress;
+    address private subscriptionOwner;
     uint256 public subscriptionCost;
     uint256 public billingFrequency;
 
@@ -21,6 +22,7 @@ contract Subscription {
     constructor(
         address _configContract,
         address _creatorAddress,
+        address _subscriptionOwner,
         uint256 _subscriptionCost,
         uint256 _billingFrequency,
         bytes memory _signedMessage
@@ -35,8 +37,14 @@ contract Subscription {
         creatorAddress = _creatorAddress;
         subscriptionCost = _subscriptionCost;
         billingFrequency = _billingFrequency;
+        subscriptionOwner = _subscriptionOwner;
 
-        configContract.subscriptionCreation(creatorAddress, _signedMessage);
+        configContract.createSubscription(creatorAddress, _signedMessage);
+    }
+
+    modifier onlySubscriptionOwner() {
+        require(msg.sender == subscriptionOwner, "Ownership");
+        _;
     }
 
     function isSubscribed(address _address) external view returns (bool) {
@@ -45,6 +53,11 @@ contract Subscription {
 
     function lastPaymentDate(address _address) external view returns (uint256) {
         return subscriberMap[_address].lastPaymentDate;
+    }
+
+    function deleteSubscriptionContract() external onlySubscriptionOwner {
+        configContract.deleteSubscription();
+        selfdestruct(payable(subscriptionOwner));
     }
 
     function subscribe() external {
@@ -89,7 +102,7 @@ contract Subscription {
         require(canTakePayment(_subscriber), "Payment Impossible");
         IERC20 usdc = IERC20(configContract.USDCAddress());
 
-        uint256 fee = (subscriptionCost / 100) * configContract.fee();
+        uint256 fee = (subscriptionCost / 100) * configContract.fee(); // do a max calculation here
         usdc.transferFrom(_subscriber, configContract.owner(), fee);
         usdc.transferFrom(_subscriber, creatorAddress, subscriptionCost - fee);
     }
