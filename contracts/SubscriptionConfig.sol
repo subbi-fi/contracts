@@ -59,6 +59,14 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         emit Subscribed(_subscriber, msg.sender);
     }
 
+    function emitSubscriptionPayment(address _subscriber, uint256 _amount)
+        external
+        override
+        onlySubscriptionContract
+    {
+        emit SubscriptionPayment(msg.sender, _subscriber, _amount);
+    }
+
     function emitCancelSubscription(address _subscriber)
         external
         override

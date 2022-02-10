@@ -102,5 +102,9 @@ contract Subscription {
         uint256 fee = (subscriptionCost / 100) * configContract.fee(); // do a max calculation here
         usdc.transferFrom(_subscriber, configContract.owner(), fee);
         usdc.transferFrom(_subscriber, ownerAddress, subscriptionCost - fee);
+        configContract.emitSubscriptionPayment(
+            _subscriber,
+            subscriptionCost - fee
+        );
     }
 }

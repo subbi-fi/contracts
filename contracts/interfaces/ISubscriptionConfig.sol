@@ -6,6 +6,11 @@ interface ISubscriptionConfig {
     event CancelSubscription(address subscriber, address subscriptionContract);
     event SubscriptionCreation(address subscriptionContract, address owner);
     event DeleteSubscription(address subscriptionContract);
+    event SubscriptionPayment(
+        address subscriptionContract,
+        address subscriber,
+        uint256 amount
+    );
 
     function signer() external view returns (address);
 
@@ -18,6 +23,9 @@ interface ISubscriptionConfig {
     function emitSubscription(address _subscriber) external; // Must only be called by a subscription contract
 
     function emitCancelSubscription(address _subscriber) external; // Must only be called by a subscription contract
+
+    function emitSubscriptionPayment(address _subscriber, uint256 _amount)
+        external;
 
     function deleteSubscription() external; // Must only be called by a subscription contract
 
