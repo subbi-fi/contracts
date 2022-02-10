@@ -11,6 +11,7 @@ contract Subscription {
     address private ownerAddress;
     uint256 public subscriptionCost;
     uint256 public billingFrequency;
+    bool public isPaused;
 
     struct Subscriber {
         bool isSubscribed;
@@ -44,6 +45,11 @@ contract Subscription {
         _;
     }
 
+    modifier whenNotPaused() {
+        require(!isPaused, "Paused");
+        _;
+    }
+
     function isSubscribed(address _address) external view returns (bool) {
         return subscriberMap[_address].isSubscribed;
     }
@@ -57,7 +63,17 @@ contract Subscription {
         selfdestruct(payable(ownerAddress));
     }
 
-    function subscribe() external {
+    function pause() external onlySubscriptionOwner {
+        require(!isPaused, "Paused");
+        isPaused = true;
+    }
+
+    function unpause() external onlySubscriptionOwner {
+        require(isPaused, "Not Paused");
+        isPaused = false;
+    }
+
+    function subscribe() external whenNotPaused {
         require(!subscriberMap[msg.sender].isSubscribed, "Subscribed");
 
         takePayment(msg.sender);
@@ -99,7 +115,8 @@ contract Subscription {
         require(canTakePayment(_subscriber), "Payment Impossible");
         IERC20 usdc = IERC20(configContract.USDCAddress());
 
-        uint256 fee = (subscriptionCost / 100) * configContract.fee(); // do a max calculation here
+        uint256 fee = (subscriptionCost / 100) *
+            configContract.fee(address(this));
         usdc.transferFrom(_subscriber, configContract.owner(), fee);
         usdc.transferFrom(_subscriber, ownerAddress, subscriptionCost - fee);
         configContract.emitSubscriptionPayment(

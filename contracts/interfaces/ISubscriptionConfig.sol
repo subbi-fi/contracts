@@ -16,7 +16,7 @@ interface ISubscriptionConfig {
 
     function USDCAddress() external view returns (address);
 
-    function fee() external view returns (uint256);
+    function fee(address _subscriptionContract) external view returns (uint256);
 
     function owner() external view returns (address);
 

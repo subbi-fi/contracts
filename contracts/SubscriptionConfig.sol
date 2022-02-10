@@ -8,10 +8,19 @@ import "./lib/ECDSA.sol";
 contract SubscriptionConfig is ISubscriptionConfig, Ownable {
     address _signer;
     address _usdcAddress;
-    uint256 _fee;
-    mapping(address => bool) subscriptionContracts;
+    uint256 _baseFee;
+    mapping(address => uint256) public subscriptionContractFee;
+    mapping(address => bool) public subscriptionContracts;
 
-    constructor() {}
+    constructor(
+        uint256 baseFee_,
+        address usdcAddress_,
+        address signer_
+    ) {
+        _baseFee = baseFee_;
+        _usdcAddress = usdcAddress_;
+        _signer = signer_;
+    }
 
     modifier onlySubscriptionContract() {
         require(subscriptionContracts[msg.sender], "Not Subscription");
@@ -26,8 +35,16 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         return _usdcAddress;
     }
 
-    function fee() external view override returns (uint256) {
-        return _fee;
+    function fee(address _subscriptionContract)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        if (subscriptionContractFee[_subscriptionContract] > 0) {
+            return subscriptionContractFee[_subscriptionContract];
+        }
+        return _baseFee;
     }
 
     function owner()
@@ -47,8 +64,15 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         _usdcAddress = usdc;
     }
 
-    function setFee(uint256 fee_) external onlyOwner {
-        _fee = fee_;
+    function setBaseFee(uint256 fee_) external onlyOwner {
+        _baseFee = fee_;
+    }
+
+    function setFeeForContract(address _subscriptionContract, uint256 _fee)
+        external
+        onlyOwner
+    {
+        subscriptionContractFee[_subscriptionContract] = _fee;
     }
 
     function emitSubscription(address _subscriber)

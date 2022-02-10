@@ -5,6 +5,7 @@
   "author": "Aaron <aarongkendall@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "ethers": "^5.5.4",
     "truffle": "^5.4.32"
   }
 }

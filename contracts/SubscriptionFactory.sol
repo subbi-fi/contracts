@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./Subscription.sol";
+import "./utils/Ownable.sol";
 
-contract SubscriptionFactory {
+contract SubscriptionFactory is Ownable {
     Subscription[] private subscriptions;
     address private configContract;
     uint256 private minCost;
@@ -17,6 +18,14 @@ contract SubscriptionFactory {
         configContract = _configContract;
         minCost = _minCost;
         billingFrequency = _billingFrequency;
+    }
+
+    function setMinCost(uint256 _newMinCost) external onlyOwner {
+        minCost = _newMinCost;
+    }
+
+    function setConfigContract(address _newConfigContract) external onlyOwner {
+        configContract = _newConfigContract;
     }
 
     function createSubscription(
