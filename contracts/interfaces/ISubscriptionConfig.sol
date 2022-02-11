@@ -4,7 +4,11 @@ pragma solidity ^0.8.0;
 interface ISubscriptionConfig {
     event Subscribed(address subscriber, address subscriptionContract);
     event CancelSubscription(address subscriber, address subscriptionContract);
-    event SubscriptionCreation(address subscriptionContract, address owner);
+    event SubscriptionCreation(
+        address subscriptionContract,
+        address owner,
+        string name
+    );
     event DeleteSubscription(address subscriptionContract);
     event SubscriptionPayment(
         address subscriptionContract,
@@ -29,6 +33,9 @@ interface ISubscriptionConfig {
 
     function deleteSubscription() external; // Must only be called by a subscription contract
 
-    function createSubscription(address _creator, bytes memory _signedMessage)
-        external; // Must only be called by a subscription contract
+    function createSubscription(
+        address _creator,
+        string memory _name,
+        bytes memory _signedMessage
+    ) external; // Must only be called by a subscription contract
 }

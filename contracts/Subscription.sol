@@ -11,6 +11,7 @@ contract Subscription {
     address private ownerAddress;
     uint256 public subscriptionCost;
     uint256 public billingFrequency;
+    string public name;
     bool public isPaused;
 
     struct Subscriber {
@@ -24,10 +25,13 @@ contract Subscription {
         address _ownerAddress,
         uint256 _subscriptionCost,
         uint256 _billingFrequency,
+        string memory _name,
         bytes memory _signedMessage
     ) {
         address _signer = ECDSA.recover(
-            ECDSA.toEthSignedMessageHash(abi.encodePacked(_ownerAddress)),
+            ECDSA.toEthSignedMessageHash(
+                abi.encodePacked(_ownerAddress, _name)
+            ),
             _signedMessage
         );
         configContract = ISubscriptionConfig(_configContract);
@@ -36,8 +40,9 @@ contract Subscription {
         ownerAddress = _ownerAddress;
         subscriptionCost = _subscriptionCost;
         billingFrequency = _billingFrequency;
+        name = _name;
 
-        configContract.createSubscription(ownerAddress, _signedMessage);
+        configContract.createSubscription(ownerAddress, _name, _signedMessage);
     }
 
     modifier onlySubscriptionOwner() {

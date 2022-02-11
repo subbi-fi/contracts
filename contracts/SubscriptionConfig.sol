@@ -104,17 +104,18 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         emit DeleteSubscription(msg.sender);
     }
 
-    function createSubscription(address _creator, bytes memory _signedMessage)
-        external
-        override
-    {
+    function createSubscription(
+        address _creator,
+        string memory _name,
+        bytes memory _signedMessage
+    ) external override {
         address signer_ = ECDSA.recover(
-            ECDSA.toEthSignedMessageHash(abi.encodePacked(_creator)),
+            ECDSA.toEthSignedMessageHash(abi.encodePacked(_creator, _name)),
             _signedMessage
         );
         require(_signer == signer_, "Not permitted");
 
         subscriptionContracts[msg.sender] = true;
-        emit SubscriptionCreation(msg.sender, _creator);
+        emit SubscriptionCreation(msg.sender, _creator, _name);
     }
 }
