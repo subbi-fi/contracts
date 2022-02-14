@@ -221,4 +221,10 @@ contract("Subscription", (accounts) => {
     await advanceTimeAndBlock(THIRTY_DAYS_IN_SECONDS + 1);
     await truffleAssert.fails(subscriptionContract.owner());
   });
+
+  it("Does not allow a Subscription contract to be deployed if the signed message does not match the arguments used to create it", async () => {
+    const name = "TestSub";
+    const signedMessage = await signer.signMessage(`${accounts[1].toLowerCase()}${name}`);
+    await truffleAssert.fails(Subscription.new(subscriptionConfigContract.address, accounts[3], ONE_USDC * 5, THIRTY_DAYS_IN_SECONDS, name, signedMessage, { from: accounts[1] }), "Signer");
+  });
 });
