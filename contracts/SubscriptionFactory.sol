@@ -30,6 +30,7 @@ contract SubscriptionFactory is Ownable {
 
     function createSubscription(
         uint256 _subscriptionCost,
+        string memory _subscriptionName,
         bytes memory _signedMessage
     ) public {
         require(_subscriptionCost >= minCost, "Below Min Cost");
@@ -38,6 +39,7 @@ contract SubscriptionFactory is Ownable {
             msg.sender,
             _subscriptionCost,
             billingFrequency,
+            _subscriptionName,
             _signedMessage
         );
 

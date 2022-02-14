@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./interfaces/ISubscriptionConfig.sol";
 import "./utils/Ownable.sol";
 import "./lib/ECDSA.sol";
+import "./lib/Strings.sol";
 
 contract SubscriptionConfig is ISubscriptionConfig, Ownable {
     address _signer;
@@ -110,7 +111,9 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         bytes memory _signedMessage
     ) external override {
         address signer_ = ECDSA.recover(
-            ECDSA.toEthSignedMessageHash(abi.encodePacked(_creator, _name)),
+            ECDSA.toEthSignedMessageHash(
+                abi.encodePacked(Strings.addressToString(_creator), _name)
+            ),
             _signedMessage
         );
         require(_signer == signer_, "Not permitted");

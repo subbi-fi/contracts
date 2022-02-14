@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./interfaces/ERC20/IERC20.sol";
 import "./interfaces/ISubscriptionConfig.sol";
 import "./lib/ECDSA.sol";
+import "./lib/Strings.sol";
 
 contract Subscription {
-    uint256 MAX_INT = type(uint256).max;
     ISubscriptionConfig private configContract;
     address private ownerAddress;
     uint256 public subscriptionCost;
@@ -30,7 +30,7 @@ contract Subscription {
     ) {
         address _signer = ECDSA.recover(
             ECDSA.toEthSignedMessageHash(
-                abi.encodePacked(_ownerAddress, _name)
+                abi.encodePacked(Strings.addressToString(_ownerAddress), _name)
             ),
             _signedMessage
         );
@@ -53,6 +53,10 @@ contract Subscription {
     modifier whenNotPaused() {
         require(!isPaused, "Paused");
         _;
+    }
+
+    function owner() external view returns (address) {
+        return ownerAddress;
     }
 
     function isSubscribed(address _address) external view returns (bool) {
@@ -112,7 +116,7 @@ contract Subscription {
     function canTakePayment(address _subscriber) private view returns (bool) {
         IERC20 usdc = IERC20(configContract.USDCAddress());
         return
-            usdc.allowance(_subscriber, address(this)) == MAX_INT &&
+            usdc.allowance(_subscriber, address(this)) >= subscriptionCost &&
             usdc.balanceOf(_subscriber) >= subscriptionCost;
     }
 
