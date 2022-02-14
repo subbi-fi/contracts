@@ -7,8 +7,8 @@
   "scripts": {
     "test": "truffle test",
     "compile": "truffle compile",
-    "deploy:polygonmain": "truffle migrate --network polygonmain",
-    "deploy:polygontestnet": "truffle migrate --network polygontestnet"
+    "deploy:polygonmain": "truffle migrate --network polygonmain --reset",
+    "deploy:polygontestnet": "truffle migrate --network polygontestnet --reset"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^2.0.3",

@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const privateKey = process.env.PRIVATE_KEY;
+const polygonRPCId = process.env.POLYGON_RPC_ID
 /**
  * Use this file to configure your truffle project. It's seeded with some
  * common settings for different networks and features like migrations,
@@ -55,7 +56,7 @@ module.exports = {
       provider: () =>
         new HDWalletProvider({
           privateKeys: [privateKey],
-          providerOrUrl: "https://rpc-mainnet.maticvigil.com",
+          providerOrUrl: `https://rpc-mainnet.maticvigil.com/v1/${polygonRPCId}`,
           numberOfAddresses: 1,
         }),
       network_id: 80001,
@@ -67,7 +68,7 @@ module.exports = {
       provider: () =>
         new HDWalletProvider({
           privateKeys: [privateKey],
-          providerOrUrl: "https://rpc-mumbai.maticvigil.com",
+          providerOrUrl: `https://rpc-mumbai.maticvigil.com/v1/${polygonRPCId}`,
           numberOfAddresses: 1,
         }),
       network_id: 80001,
