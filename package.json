@@ -6,9 +6,13 @@
   "license": "MIT",
   "scripts": {
     "test": "truffle test",
-    "compile": "truffle compile"
+    "compile": "truffle compile",
+    "deploy:polygonmain": "truffle migrate --network polygonmain",
+    "deploy:polygontestnet": "truffle migrate --network polygontestnet"
   },
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^2.0.3",
+    "dotenv": "^16.0.0",
     "ethers": "^5.5.4",
     "truffle": "^5.4.32",
     "truffle-assertions": "^0.9.2"
