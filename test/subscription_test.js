@@ -156,4 +156,69 @@ contract("Subscription", (accounts) => {
     await subscriptionContract.processPayment(accounts[2]);
     assert.isFalse(await subscriptionContract.isSubscribed(accounts[2]), "Account should not be subscribed");
   });
+
+  it("A user can cancel their subscription and they will no longer be subscribed", async () => {
+    const name = "TestSub";
+    const signedMessage = await signer.signMessage(`${accounts[1].toLowerCase()}${name}`);
+    const subscriptionContract = await Subscription.new(subscriptionConfigContract.address, accounts[1], ONE_USDC * 5, THIRTY_DAYS_IN_SECONDS, name, signedMessage, { from: accounts[1] });
+    
+    await fakeUSDC.transfer(accounts[2], 1000000000, { from: accounts[0] });
+    await fakeUSDC.approve(subscriptionContract.address, MAX_UINT, { from: accounts[2] });
+
+    await subscriptionContract.subscribe({ from: accounts[2] });
+    assert.isTrue(await subscriptionContract.isSubscribed(accounts[2]), "Account should be subscribed");
+    assert.isAbove((await subscriptionContract.lastPaymentDate(accounts[2])).toNumber(), 0, "Should have a last payment date");
+
+    await advanceTimeAndBlock(THIRTY_DAYS_IN_SECONDS + 1);
+    await subscriptionContract.processPayment(accounts[2]);
+
+    assert.equal((await fakeUSDC.balanceOf(accounts[2])).toString(), `${1000000000 - (ONE_USDC * 10)}`, "Unexpected balance after two payments");
+    assert.equal((await fakeUSDC.balanceOf(accounts[1])).toString(), `${ONE_USDC * 10 * 0.97}`, "Subscription owner should have received their fee");
+    assert.equal((await fakeUSDC.balanceOf(configOwner)).toString(), `${ONE_USDC * 10 * 0.03}`, "SubscriptionConfig owner should have received their cut twice")
+
+    await subscriptionContract.cancelSubscription({ from: accounts[2] });
+    assert.isFalse(await subscriptionContract.isSubscribed(accounts[2]), "Account should not be subscribed");
+  });
+
+  it("If a subscription owner pauses a subscription contract then no new users can subscribe but existing subscribers can still have their payments processed", async () => {
+    const name = "TestSub";
+    const signedMessage = await signer.signMessage(`${accounts[1].toLowerCase()}${name}`);
+    const subscriptionContract = await Subscription.new(subscriptionConfigContract.address, accounts[1], ONE_USDC * 5, THIRTY_DAYS_IN_SECONDS, name, signedMessage, { from: accounts[1] });
+    
+    await fakeUSDC.transfer(accounts[2], 1000000000, { from: accounts[0] });
+    await fakeUSDC.approve(subscriptionContract.address, MAX_UINT, { from: accounts[2] });
+
+    await subscriptionContract.subscribe({ from: accounts[2] });
+    assert.isTrue(await subscriptionContract.isSubscribed(accounts[2]), "Account should be subscribed");
+    assert.isAbove((await subscriptionContract.lastPaymentDate(accounts[2])).toNumber(), 0, "Should have a last payment date");
+
+    await subscriptionContract.pause({ from: accounts[1] });
+    await truffleAssert.reverts(subscriptionContract.subscribe({ from: accounts[3] }), "Paused");
+
+    await advanceTimeAndBlock(THIRTY_DAYS_IN_SECONDS + 1);
+    await subscriptionContract.processPayment(accounts[2]);
+
+    assert.equal((await fakeUSDC.balanceOf(accounts[2])).toString(), `${1000000000 - (ONE_USDC * 10)}`, "Unexpected balance after two payments");
+    assert.equal((await fakeUSDC.balanceOf(accounts[1])).toString(), `${ONE_USDC * 10 * 0.97}`, "Subscription owner should have received their fee");
+    assert.equal((await fakeUSDC.balanceOf(configOwner)).toString(), `${ONE_USDC * 10 * 0.03}`, "SubscriptionConfig owner should have received their cut twice")
+  });
+
+  it("A subscription owner can delete a subscription contract removing its code from the blockchain", async () => {
+    const name = "TestSub";
+    const signedMessage = await signer.signMessage(`${accounts[1].toLowerCase()}${name}`);
+    const subscriptionContract = await Subscription.new(subscriptionConfigContract.address, accounts[1], ONE_USDC * 5, THIRTY_DAYS_IN_SECONDS, name, signedMessage, { from: accounts[1] });
+    
+    await fakeUSDC.transfer(accounts[2], 1000000000, { from: accounts[0] });
+    await fakeUSDC.approve(subscriptionContract.address, MAX_UINT, { from: accounts[2] });
+
+    await subscriptionContract.subscribe({ from: accounts[2] });
+    assert.isTrue(await subscriptionContract.isSubscribed(accounts[2]), "Account should be subscribed");
+    assert.isAbove((await subscriptionContract.lastPaymentDate(accounts[2])).toNumber(), 0, "Should have a last payment date");
+
+    await truffleAssert.reverts(subscriptionContract.deleteSubscriptionContract({ from: accounts[0] }), "Ownership");
+    await subscriptionContract.deleteSubscriptionContract({ from: accounts[1] })
+
+    await advanceTimeAndBlock(THIRTY_DAYS_IN_SECONDS + 1);
+    await truffleAssert.fails(subscriptionContract.owner());
+  });
 });
