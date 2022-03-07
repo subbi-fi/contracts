@@ -20,7 +20,7 @@ contract("SubscriptionFactory", (accounts) => {
     signer = new ethers.Wallet.createRandom();
 
     const fakeUSDC = await FakeUSDC.new(STARTING_USDC_SUPPLY, { from: accounts[0] });
-    subscriptionConfigContract = await SubscriptionConfig.new(3, fakeUSDC.address, signer.address, { from: configOwner });
+    subscriptionConfigContract = await SubscriptionConfig.new(30, fakeUSDC.address, signer.address, { from: configOwner });
     subscriptionFactoryContract = await SubscriptionFactory.new(subscriptionConfigContract.address, ONE_USDC, THIRTY_DAYS_IN_SECONDS, { from: configOwner });
   });
 

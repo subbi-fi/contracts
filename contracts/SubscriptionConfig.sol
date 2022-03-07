@@ -9,7 +9,7 @@ import "./lib/Strings.sol";
 contract SubscriptionConfig is ISubscriptionConfig, Ownable {
     address _signer;
     address _usdcAddress;
-    uint256 _baseFee;
+    uint256 _baseFee; // 1 == 0.1%
     mapping(address => uint256) public subscriptionContractFee;
     mapping(address => bool) public subscriptionContracts;
 

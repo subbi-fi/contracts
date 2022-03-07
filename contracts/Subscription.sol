@@ -87,15 +87,14 @@ contract Subscription {
     function subscribe() external whenNotPaused {
         require(!subscriberMap[msg.sender].isSubscribed, "Subscribed");
 
-        takePayment(msg.sender);
+        takePayment(msg.sender, false);
         subscriberMap[msg.sender] = Subscriber(true, block.timestamp);
         configContract.emitSubscription(msg.sender);
     }
 
     function cancelSubscription() external {
         require(subscriberMap[msg.sender].isSubscribed, "Not Subscribed");
-        subscriberMap[msg.sender].isSubscribed = false;
-        configContract.emitCancelSubscription(msg.sender);
+        handleCancelSubscription(msg.sender);
     }
 
     function processPayment(address _subscriber) external {
@@ -107,12 +106,16 @@ contract Subscription {
         );
 
         if (canTakePayment(_subscriber)) {
-            takePayment(_subscriber);
+            takePayment(_subscriber, true);
             subscriberMap[_subscriber].lastPaymentDate = block.timestamp;
         } else {
-            subscriberMap[_subscriber].isSubscribed = false;
-            configContract.emitCancelSubscription(msg.sender);
+            handleCancelSubscription(_subscriber);
         }
+    }
+
+    function handleCancelSubscription(address _subscriber) private {
+        subscriberMap[_subscriber].isSubscribed = false;
+        configContract.emitCancelSubscription(msg.sender);
     }
 
     function canTakePayment(address _subscriber) private view returns (bool) {
@@ -122,17 +125,48 @@ contract Subscription {
             usdc.balanceOf(_subscriber) >= subscriptionCost;
     }
 
-    function takePayment(address _subscriber) private {
+    function calculateFeeSplit(bool _splitFee)
+        private
+        view
+        returns (
+            uint256 _totalFee,
+            uint256 _subbiTake,
+            uint256 _processorTake
+        )
+    {
+        uint256 totalFee = (subscriptionCost / 1000) *
+            configContract.fee(address(this));
+
+        if (msg.sender == configContract.owner() || !_splitFee) {
+            return (totalFee, totalFee, 0);
+        }
+
+        return (totalFee, (totalFee / uint256(4)) * 3, totalFee / uint256(4));
+    }
+
+    function takePayment(address _subscriber, bool _splitFee) private {
         require(canTakePayment(_subscriber), "Payment Impossible");
         IERC20 usdc = IERC20(configContract.USDCAddress());
 
-        uint256 fee = (subscriptionCost / 100) *
-            configContract.fee(address(this));
-        usdc.transferFrom(_subscriber, configContract.owner(), fee);
-        usdc.transferFrom(_subscriber, ownerAddress, subscriptionCost - fee);
+        (
+            uint256 totalFee,
+            uint256 subbiTake,
+            uint256 processorTake
+        ) = calculateFeeSplit(_splitFee);
+        usdc.transferFrom(_subscriber, configContract.owner(), subbiTake);
+        usdc.transferFrom(
+            _subscriber,
+            ownerAddress,
+            subscriptionCost - totalFee
+        );
+
+        if (processorTake > 0) {
+            usdc.transferFrom(_subscriber, msg.sender, processorTake);
+        }
+
         configContract.emitSubscriptionPayment(
             _subscriber,
-            subscriptionCost - fee
+            subscriptionCost - totalFee
         );
     }
 }

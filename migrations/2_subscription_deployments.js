@@ -12,7 +12,7 @@ const ONE_DAY_IN_SECONDS = 60 * 60 * 24 * 1;
 module.exports = (deployer, network) => {
   if (network === "development") return;
   deployer.then(async () => {
-    await deployer.deploy(SubscriptionConfig, 3, usdcAddress, signer);
+    await deployer.deploy(SubscriptionConfig, 30, usdcAddress, signer);
     const configInstance = await SubscriptionConfig.deployed();
 
     await deployer.deploy(SubscriptionFactory, configInstance.address, ONE_USDC, ONE_DAY_IN_SECONDS);
