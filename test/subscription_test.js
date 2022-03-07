@@ -6,6 +6,8 @@ const ethers = require('ethers');
 const truffleAssert = require('truffle-assertions');
 const { advanceTimeAndBlock } = require('./helpers/time');
 
+const subscriptionPausedHash = "0xcd71257f2998474633e94cfffa045014068f6218ffdca256b6f4aa9d5f15fb89";
+const subscriptionUnpausedHash = "0x94482ee2b195c365dbbc2d689fd5a088d2b219abe44360ba8895525c9471d66f";
 const THIRTY_DAYS_IN_SECONDS = 60 * 60 * 24 * 30;
 const MAX_UINT = new web3.utils.BN("2").pow(new web3.utils.BN("256").sub(new web3.utils.BN("1")));
 const ONE_USDC = 1000000;
@@ -180,7 +182,7 @@ contract("Subscription", (accounts) => {
     assert.isFalse(await subscriptionContract.isSubscribed(accounts[2]), "Account should not be subscribed");
   });
 
-  it("If a subscription owner pauses a subscription contract then no new users can subscribe but existing subscribers can still have their payments processed", async () => {
+  it("If a subscription owner pauses a subscription contract then no new users can subscribe but existing subscribers can still have their payments processed. Pausing and unpausing a contract emits the corresponding events", async () => {
     const name = "TestSub";
     const signedMessage = await signer.signMessage(`${accounts[1].toLowerCase()}${name}`);
     const subscriptionContract = await Subscription.new(subscriptionConfigContract.address, accounts[1], ONE_USDC * 5, THIRTY_DAYS_IN_SECONDS, name, signedMessage, { from: accounts[1] });
@@ -192,7 +194,8 @@ contract("Subscription", (accounts) => {
     assert.isTrue(await subscriptionContract.isSubscribed(accounts[2]), "Account should be subscribed");
     assert.isAbove((await subscriptionContract.lastPaymentDate(accounts[2])).toNumber(), 0, "Should have a last payment date");
 
-    await subscriptionContract.pause({ from: accounts[1] });
+    const pauseResult = await subscriptionContract.pause({ from: accounts[1] });
+    assert.equal(pauseResult.receipt.rawLogs[0].topics[0], subscriptionPausedHash, "Pause event does not appear to have been emitted");
     await truffleAssert.reverts(subscriptionContract.subscribe({ from: accounts[3] }), "Paused");
 
     await advanceTimeAndBlock(THIRTY_DAYS_IN_SECONDS + 1);
@@ -201,6 +204,9 @@ contract("Subscription", (accounts) => {
     assert.equal((await fakeUSDC.balanceOf(accounts[2])).toString(), `${1000000000 - (ONE_USDC * 10)}`, "Unexpected balance after two payments");
     assert.equal((await fakeUSDC.balanceOf(accounts[1])).toString(), `${ONE_USDC * 10 * 0.97}`, "Subscription owner should have received their fee");
     assert.equal((await fakeUSDC.balanceOf(configOwner)).toString(), `${ONE_USDC * 10 * 0.03}`, "SubscriptionConfig owner should have received their cut twice")
+
+    const unpauseResult = await subscriptionContract.unpause({ from: accounts[1] });
+    assert.equal(unpauseResult.receipt.rawLogs[0].topics[0], subscriptionUnpausedHash, "Unpause event does not appear to have been emitted");
   });
 
   it("A subscription owner can delete a subscription contract removing its code from the blockchain", async () => {

@@ -15,6 +15,8 @@ interface ISubscriptionConfig {
         address subscriber,
         uint256 amount
     );
+    event SubscriptionPaused(address subscriptionContract);
+    event SubscriptionUnpaused(address subscriptionContract);
 
     function signer() external view returns (address);
 
@@ -30,6 +32,10 @@ interface ISubscriptionConfig {
 
     function emitSubscriptionPayment(address _subscriber, uint256 _amount)
         external;
+
+    function emitPauseSubscription(address _subscription) external; // Must only be called by a subscription contract, specifically the one pausing
+
+    function emitUnpauseSubscription(address _subscription) external; // Must only be called by a subscription contract, specifically the one unpausing
 
     function deleteSubscription() external; // Must only be called by a subscription contract
 

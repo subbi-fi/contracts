@@ -75,11 +75,13 @@ contract Subscription {
     function pause() external onlySubscriptionOwner {
         require(!isPaused, "Paused");
         isPaused = true;
+        configContract.emitPauseSubscription(address(this));
     }
 
     function unpause() external onlySubscriptionOwner {
         require(isPaused, "Not Paused");
         isPaused = false;
+        configContract.emitUnpauseSubscription(address(this));
     }
 
     function subscribe() external whenNotPaused {

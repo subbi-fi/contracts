@@ -100,6 +100,24 @@ contract SubscriptionConfig is ISubscriptionConfig, Ownable {
         emit CancelSubscription(_subscriber, msg.sender);
     }
 
+    function emitPauseSubscription(address _subscription)
+        external
+        override
+        onlySubscriptionContract
+    {
+        require(msg.sender == _subscription);
+        emit SubscriptionPaused(_subscription);
+    }
+
+    function emitUnpauseSubscription(address _subscription)
+        external
+        override
+        onlySubscriptionContract
+    {
+        require(msg.sender == _subscription);
+        emit SubscriptionUnpaused(_subscription);
+    }
+
     function deleteSubscription() external override onlySubscriptionContract {
         subscriptionContracts[msg.sender] = false;
         emit DeleteSubscription(msg.sender);
