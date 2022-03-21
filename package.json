@@ -8,13 +8,16 @@
     "test": "truffle test",
     "compile": "truffle compile",
     "deploy:polygonmain": "truffle migrate --network polygonmain --reset",
-    "deploy:polygontestnet": "truffle migrate --network polygontestnet --reset"
+    "deploy:polygontestnet": "truffle migrate --network polygontestnet --reset",
+    "flatten:config": "truffle-flattener ./contracts/SubscriptionConfig.sol | pbcopy",
+    "flatten:factory": "truffle-flattener ./contracts/SubscriptionFactory.sol | pbcopy"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^2.0.3",
     "dotenv": "^16.0.0",
     "ethers": "^5.5.4",
     "truffle": "^5.4.32",
-    "truffle-assertions": "^0.9.2"
+    "truffle-assertions": "^0.9.2",
+    "truffle-flattener": "^1.6.0"
   }
 }

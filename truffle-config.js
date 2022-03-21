@@ -63,6 +63,7 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 200,
       gasPrice: 35000000000,
+      gasLimit: 2687635,
       skipDryRun: true,
     },
     polygontestnet: {
