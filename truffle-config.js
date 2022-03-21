@@ -59,9 +59,10 @@ module.exports = {
           providerOrUrl: `https://rpc-mainnet.maticvigil.com/v1/${polygonRPCId}`,
           numberOfAddresses: 1,
         }),
-      network_id: 80001,
+      network_id: 137,
       confirmations: 2,
       timeoutBlocks: 200,
+      gasPrice: 35000000000,
       skipDryRun: true,
     },
     polygontestnet: {

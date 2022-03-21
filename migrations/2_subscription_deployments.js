@@ -13,10 +13,12 @@ const THIRTY_DAYS_IN_SECONDS = 60 * 60 * 24 * 30;
 module.exports = (deployer, network) => {
   if (network === "development") return;
   deployer.then(async () => {
+    console.log(`Deploying to ${network}...`);
     await deployer.deploy(SubscriptionConfig, 30, usdcAddress, signer);
     const configInstance = await SubscriptionConfig.deployed();
 
     const billingInterval = network === "polygontestnet" ? ONE_DAY_IN_SECONDS : THIRTY_DAYS_IN_SECONDS;
+    console.log(`Deploying with a Min cost of ${ONE_USDC} and a billing interval of ${billingInterval}`);
     await deployer.deploy(SubscriptionFactory, configInstance.address, ONE_USDC, billingInterval);
   })
 };
